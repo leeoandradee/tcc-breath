@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
                     Bundle extras = data.getExtras();
                     Bitmap imageBitmap = (Bitmap) extras.get("data");
                     imageView.setImageBitmap(imageBitmap);
-                    //IaServiceRequest(imageBitmap.toString());
+                    IaServiceRequest(imageBitmap.toString());
                     break;
             }
 
@@ -135,34 +135,25 @@ public class MainActivity extends AppCompatActivity {
 
     public String IaServiceRequest(final String imagem) {
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://www.google.com";
+        String url ="http://10.0.2.2:5002/getLungDisease?"+imagem;
 
-
-        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>()
-                {
+        // Request a string response from the provided URL.
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        serviceResponse = response;
+                        // Display the first 500 characters of the response string.
+                        textView.setText("Response is: "+ response.toString());
                     }
-                },
-                new Response.ErrorListener()
-                {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        serviceResponse = error.toString();
-                    }
-                }
-        ) {
+                }, new Response.ErrorListener() {
             @Override
-            protected Map<String, String> getParams()
-            {
-                Map<String, String>  params = new HashMap<String, String>();
-                params.put("imagem", imagem);
-                return params;
+            public void onErrorResponse(VolleyError error) {
+                textView.setText("That didn't work!");
             }
-        };
-        queue.add(postRequest);
+        });
+
+    // Add the request to the RequestQueue.
+        queue.add(stringRequest);
         return serviceResponse;
     }
 
