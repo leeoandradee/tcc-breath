@@ -8,6 +8,23 @@
     android:background="#c3dce8"
     tools:context=".MainActivity">
 
+    <ProgressBar
+        android:id="@+id/pBar"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="95dp"
+        android:layout_height="97dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/view"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        ></ProgressBar>
+
     <View
         android:id="@+id/view"
         android:layout_width="wrap_content"
@@ -58,9 +75,10 @@
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="228dp"
-        android:layout_height="51dp"
-        android:text="Tire ou escolha a foto do seu pulmão para analise"
+        android:layout_width="310dp"
+        android:layout_height="116dp"
+        android:gravity="center"
+        android:text="Tire ou escolha a foto para analise do pulmão"
         android:textColor="#6d89a6"
         android:textSize="18sp"
         app:fontFamily="@font/montserrat"
