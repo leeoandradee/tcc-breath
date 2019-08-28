@@ -14,6 +14,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -28,6 +30,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -43,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar pgsBar;
     private TextView textView;
     private String serviceResponse;
+    private String result;
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int GALLERY_REQUEST_CODE = 2;
 
@@ -103,8 +107,10 @@ public class MainActivity extends AppCompatActivity {
                 case REQUEST_IMAGE_CAPTURE:
                     Bundle extras = data.getExtras();
                     Bitmap imageBitmap = (Bitmap) extras.get("data");
+                    String image = getStringFromBitmap(imageBitmap);
+                    Log.d("Imagem em bit", image);
                     imageView.setImageBitmap(imageBitmap);
-                    IaServiceRequest(imageBitmap.toString());
+                    textView.setText(IaServiceRequest(image));
                     break;
             }
 
@@ -134,27 +140,50 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public String IaServiceRequest(final String imagem) {
-        RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://10.0.2.2:5002/getLungDisease?"+imagem;
 
-        // Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+
+        String url = "http://10.0.2.2:5002/getLungDisease";
+        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        textView.setText("Response is: "+ response.toString());
+                        // response
+                        Log.d("Response", response);
+                        result = response.toString();
                     }
-                }, new Response.ErrorListener() {
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // error
+                        Log.d("Error.Response", error.toString());
+                    }
+                }
+        ) {
             @Override
-            public void onErrorResponse(VolleyError error) {
-                textView.setText("That didn't work!");
-            }
-        });
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("imagem", imagem);
 
-    // Add the request to the RequestQueue.
-        queue.add(stringRequest);
-        return serviceResponse;
+                return params;
+            }
+        };
+        queue.add(postRequest);
+        return result;
     }
+
+    private String getStringFromBitmap(Bitmap bitmapPicture) {
+        final int COMPRESSION_QUALITY = 100;
+        String encodedImage;
+        ByteArrayOutputStream byteArrayBitmapStream = new ByteArrayOutputStream();
+        bitmapPicture.compress(Bitmap.CompressFormat.PNG, COMPRESSION_QUALITY,
+                byteArrayBitmapStream);
+        byte[] b = byteArrayBitmapStream.toByteArray();
+        encodedImage = Base64.encodeToString(b, Base64.DEFAULT);
+        return encodedImage;
+    }
+
 
 }
