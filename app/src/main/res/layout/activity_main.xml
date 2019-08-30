@@ -21,9 +21,10 @@
         android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toTopOf="@+id/view"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        ></ProgressBar>
+        app:layout_constraintVertical_bias="0.839"></ProgressBar>
 
     <View
         android:id="@+id/view"
@@ -38,45 +39,44 @@
 
     <ImageButton
         android:id="@+id/takePictureButton"
-        android:layout_width="106dp"
-        android:layout_height="65dp"
+        android:layout_width="71dp"
+        android:layout_height="57dp"
+        android:layout_marginEnd="52dp"
+        android:layout_marginRight="52dp"
+        android:layout_marginBottom="4dp"
         android:background="@android:color/transparent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/choosePictureButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0"
-        app:srcCompat="@drawable/cameraicon" />
+        app:srcCompat="@drawable/imagepicture" />
 
     <ImageButton
         android:id="@+id/choosePictureButton"
-        android:layout_width="103dp"
-        android:layout_height="71dp"
+        android:layout_width="81dp"
+        android:layout_height="62dp"
         android:layout_gravity="clip_horizontal"
+        android:layout_marginEnd="60dp"
+        android:layout_marginRight="60dp"
+        android:layout_marginBottom="4dp"
         android:background="@android:color/transparent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.81"
-        app:layout_constraintStart_toEndOf="@+id/takePictureButton"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0"
-        app:srcCompat="@drawable/pictureicon" />
+        app:layout_constraintEnd_toStartOf="@+id/imageButton"
+        app:srcCompat="@drawable/imagefile" />
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="176dp"
+        android:layout_height="214dp"
         app:layout_constraintBottom_toTopOf="@+id/choosePictureButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.35000002"
-        app:srcCompat="@drawable/pulmaopicture" />
+        app:layout_constraintVertical_bias="0.306"
+        app:srcCompat="@drawable/xray" />
 
     <TextView
         android:id="@+id/textView"
         android:layout_width="310dp"
-        android:layout_height="116dp"
+        android:layout_height="115dp"
         android:gravity="center"
         android:text="Tire ou escolha a foto para analise do pulmão"
         android:textColor="#6d89a6"
@@ -86,7 +86,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageView"
-        app:layout_constraintVertical_bias="0.146" />
+        app:layout_constraintVertical_bias="0.368" />
+
+    <ImageButton
+        android:id="@+id/imageButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        app:srcCompat="@drawable/members"
+        tools:layout_editor_absoluteX="288dp"
+        tools:layout_editor_absoluteY="503dp" />
 
 
 </android.support.constraint.ConstraintLayout>
