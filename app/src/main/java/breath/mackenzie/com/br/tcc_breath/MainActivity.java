@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Environment;
@@ -30,9 +31,13 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -102,15 +107,22 @@ public class MainActivity extends AppCompatActivity {
             switch (requestCode){
                 case GALLERY_REQUEST_CODE:
                     Uri selectedImage = data.getData();
-                    imageView.setImageURI(selectedImage);
+                    try {
+                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImage);
+                        String imageGallery = getStringFromBitmap(bitmap);
+                        imageView.setImageBitmap(bitmap);
+                        textView.setText(IaServiceRequest(imageGallery));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                     break;
                 case REQUEST_IMAGE_CAPTURE:
                     Bundle extras = data.getExtras();
-                    Bitmap imageBitmap = (Bitmap) extras.get("data");
-                    String image = getStringFromBitmap(imageBitmap);
-                    Log.d("Imagem em bit", image);
-                    imageView.setImageBitmap(imageBitmap);
-                    textView.setText(IaServiceRequest(image));
+                    Bitmap imageBitmapCapture = (Bitmap) extras.get("data");
+                    String imageCapture = getStringFromBitmap(imageBitmapCapture);
+                    imageView.setImageBitmap(imageBitmapCapture);
+                    textView.setText(IaServiceRequest(imageCapture));
                     break;
             }
 
@@ -183,6 +195,50 @@ public class MainActivity extends AppCompatActivity {
         byte[] b = byteArrayBitmapStream.toByteArray();
         encodedImage = Base64.encodeToString(b, Base64.DEFAULT);
         return encodedImage;
+    }
+
+    public Bitmap loadBitmap(String url)
+    {
+        Bitmap bm = null;
+        InputStream is = null;
+        BufferedInputStream bis = null;
+        try
+        {
+            URLConnection conn = new URL(url).openConnection();
+            conn.connect();
+            is = conn.getInputStream();
+            bis = new BufferedInputStream(is, 8192);
+            bm = BitmapFactory.decodeStream(bis);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        finally {
+            if (bis != null)
+            {
+                try
+                {
+                    bis.close();
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+            if (is != null)
+            {
+                try
+                {
+                    is.close();
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return bm;
     }
 
 
