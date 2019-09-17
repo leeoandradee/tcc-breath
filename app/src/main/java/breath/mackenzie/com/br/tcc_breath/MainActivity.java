@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -35,6 +36,18 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
+
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -88,14 +101,22 @@ public class MainActivity extends AppCompatActivity implements  BottomNavigation
             switch (requestCode){
                 case GALLERY_REQUEST_CODE:
                     Uri selectedImage = data.getData();
-                    imageView.setImageURI(selectedImage);
+                    try {
+                        Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImage);
+                        String imageGallery = getStringFromBitmap(bitmap);
+                        imageView.setImageBitmap(bitmap);
+                        textView.setText(IaServiceRequest(imageGallery));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                     break;
                 case REQUEST_IMAGE_CAPTURE:
                     Bundle extras = data.getExtras();
-                    Bitmap imageBitmap = (Bitmap) extras.get("data");
-                    //imageView.setImageBitmap(imageBitmap);
-                    showLoadView();
-                    teste(imageBitmap.toString());
+                    Bitmap imageBitmapCapture = (Bitmap) extras.get("data");
+                    String imageCapture = getStringFromBitmap(imageBitmapCapture);
+                    imageView.setImageBitmap(imageBitmapCapture);
+                    textView.setText(IaServiceRequest(imageCapture));
                     break;
             }
 
@@ -168,60 +189,53 @@ public class MainActivity extends AppCompatActivity implements  BottomNavigation
         encodedImage = Base64.encodeToString(b, Base64.DEFAULT);
         return encodedImage;
     }
-    public void teste(final String imagem) {
-        try {
-            RequestQueue requestQueue = Volley.newRequestQueue(this);
-            String URL = "http://10.0.2.2:3000/tcc";
-            JSONObject jsonBody = new JSONObject();
-            jsonBody.put("imagem", imagem);
-            final String requestBody = jsonBody.toString();
 
-            StringRequest stringRequest = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
-                @Override
-                public void onResponse(String response) {
-                    Log.i("VOLLEY", response);
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Log.e("VOLLEY", error.toString());
-                }
-            }) {
-                @Override
-                public String getBodyContentType() {
-                    return "application/json; charset=utf-8";
-                }
-
-                @Override
-                public byte[] getBody() throws AuthFailureError {
-                    try {
-                        return requestBody == null ? null : requestBody.getBytes("utf-8");
-                    } catch (UnsupportedEncodingException uee) {
-                        VolleyLog.wtf("Unsupported Encoding while trying to get the bytes of %s using %s", requestBody, "utf-8");
-                        return null;
-                    }
-                }
-
-                @Override
-                protected Response<String> parseNetworkResponse(NetworkResponse response) {
-                    String responseString = "";
-                    if (response != null) {
-                        responseString = String.valueOf(response.statusCode);
-                        // can get more details such as response.headers
-                    }
-                    return Response.success(responseString, HttpHeaderParser.parseCacheHeaders(response));
-                }
-            };
-
-            requestQueue.add(stringRequest);
-        } catch (JSONException e) {
+    public Bitmap loadBitmap(String url)
+    {
+        Bitmap bm = null;
+        InputStream is = null;
+        BufferedInputStream bis = null;
+        try
+        {
+            URLConnection conn = new URL(url).openConnection();
+            conn.connect();
+            is = conn.getInputStream();
+            bis = new BufferedInputStream(is, 8192);
+            bm = BitmapFactory.decodeStream(bis);
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
         }
+        finally {
+            if (bis != null)
+            {
+                try
+                {
+                    bis.close();
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+            if (is != null)
+            {
+                try
+                {
+                    is.close();
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return bm;
     }
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
-
         switch (menuItem.getItemId()) {
             case R.id.navigation_camera:
                 dispatchTakePictureIntent();
