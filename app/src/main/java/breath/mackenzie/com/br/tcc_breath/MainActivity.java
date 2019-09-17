@@ -6,18 +6,17 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.annotation.Nullable;
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -32,26 +31,21 @@ import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.File;
-import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements  BottomNavigationView.OnNavigationItemSelectedListener{
 
-    private ImageButton takePictureButton;
-    private ImageButton choosePictureButton;
     private ImageView imageView;
     private ProgressBar pgsBar;
     private TextView textView;
     private String serviceResponse;
+    private String result;
+    private BottomNavigationView bottom_bar;
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int GALLERY_REQUEST_CODE = 2;
 
@@ -60,8 +54,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        takePictureButton = (ImageButton) findViewById(R.id.takePictureButton);
-        choosePictureButton = (ImageButton) findViewById(R.id.choosePictureButton);
+
+        bottom_bar = findViewById(R.id.bottom_navigation);
+        bottom_bar.setOnNavigationItemSelectedListener(this);
+        bottom_bar.setSelectedItemId(R.id.navigation_home);
+
         imageView = (ImageView) findViewById(R.id.imageView);
         textView = (TextView) findViewById(R.id.textView);
         pgsBar = (ProgressBar)findViewById(R.id.pBar);
@@ -71,21 +68,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            takePictureButton.setEnabled(false);
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
         }
-
-        takePictureButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                dispatchTakePictureIntent();
-            }
-        });
-
-        choosePictureButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                pickFromGallery();
-            }
-        });
 
     }
 
@@ -94,7 +78,6 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == 0) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED
                     && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                takePictureButton.setEnabled(true);
             }
         }
     }
@@ -141,29 +124,50 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public String IaServiceRequest(final String imagem) {
-        RequestQueue queue = Volley.newRequestQueue(this);
-        String url ="http://10.0.2.2:5002/getLungDisease?"+imagem;
 
-        // Request a string response from the provided URL.
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+
+        String url = "http://10.0.2.2:5002/getLungDisease";
+        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        textView.setText("Response is: "+ response.toString());
+                        // response
+                        Log.d("Response", response);
+                        result = response.toString();
                     }
-                }, new Response.ErrorListener() {
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // error
+                        Log.d("Error.Response", error.toString());
+                    }
+                }
+        ) {
             @Override
-            public void onErrorResponse(VolleyError error) {
-                textView.setText("That didn't work!");
-            }
-        });
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("imagem", imagem);
 
-    // Add the request to the RequestQueue.
-        queue.add(stringRequest);
-        return serviceResponse;
+                return params;
+            }
+        };
+        queue.add(postRequest);
+        return result;
     }
 
+    private String getStringFromBitmap(Bitmap bitmapPicture) {
+        final int COMPRESSION_QUALITY = 100;
+        String encodedImage;
+        ByteArrayOutputStream byteArrayBitmapStream = new ByteArrayOutputStream();
+        bitmapPicture.compress(Bitmap.CompressFormat.PNG, COMPRESSION_QUALITY,
+                byteArrayBitmapStream);
+        byte[] b = byteArrayBitmapStream.toByteArray();
+        encodedImage = Base64.encodeToString(b, Base64.DEFAULT);
+        return encodedImage;
+    }
     public void teste(final String imagem) {
         try {
             RequestQueue requestQueue = Volley.newRequestQueue(this);
@@ -215,4 +219,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+
+        switch (menuItem.getItemId()) {
+            case R.id.navigation_camera:
+                dispatchTakePictureIntent();
+                bottom_bar.setSelectedItemId(R.id.navigation_home);
+                return true;
+            case R.id.navigation_gallery:
+                pickFromGallery();
+                bottom_bar.setSelectedItemId(R.id.navigation_home);
+                return true;
+        }
+        return false;
+    }
 }
