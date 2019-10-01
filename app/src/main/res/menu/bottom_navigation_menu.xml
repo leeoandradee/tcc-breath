@@ -13,8 +13,5 @@
         android:icon="@drawable/ic_photo_library_black_24dp"
         android:title="Galeria" />
 
-    <item android:id="@+id/navigation_info"
-        android:icon="@drawable/ic_account_box_black_24dp"
-        android:title="Sobre" />
 
 </menu>

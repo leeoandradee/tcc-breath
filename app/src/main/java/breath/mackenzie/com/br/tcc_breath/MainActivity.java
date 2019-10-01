@@ -23,6 +23,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -32,6 +33,8 @@ import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
@@ -45,6 +48,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -105,7 +109,8 @@ public class MainActivity extends AppCompatActivity implements  BottomNavigation
                         Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImage);
                         String imageGallery = getStringFromBitmap(bitmap);
                         imageView.setImageBitmap(bitmap);
-                        textView.setText(IaServiceRequest(imageGallery));
+                        IaServiceRequest(imageGallery);
+                        showLoadView();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -116,7 +121,8 @@ public class MainActivity extends AppCompatActivity implements  BottomNavigation
                     Bitmap imageBitmapCapture = (Bitmap) extras.get("data");
                     String imageCapture = getStringFromBitmap(imageBitmapCapture);
                     imageView.setImageBitmap(imageBitmapCapture);
-                    textView.setText(IaServiceRequest(imageCapture));
+                    IaServiceRequest(imageCapture);
+                    showLoadView();
                     break;
             }
 
@@ -139,31 +145,59 @@ public class MainActivity extends AppCompatActivity implements  BottomNavigation
     }
 
     private void showLoadView() {
-        imageView.setVisibility(View.GONE);
+        textView.setVisibility(View.GONE);
         pgsBar.setVisibility(View.VISIBLE);
-        textView.setText("carregando...");
     }
 
-    public String IaServiceRequest(final String imagem) {
+    private void hideLoadView() {
+        pgsBar.setVisibility(View.GONE);
+        textView.setVisibility(View.VISIBLE);
+
+    }
+
+    public void IaServiceRequest(final String imagem) {
 
         RequestQueue queue = Volley.newRequestQueue(this);
 
 
-        String url = "http://10.0.2.2:5002/getLungDisease";
+        String url = "https://meuherokuapi.herokuapp.com/getLungDisease";
         StringRequest postRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        // response
-                        Log.d("Response", response);
+                        Log.d("Response", response.toString());
                         result = response.toString();
+                        RespostaDto resp = null;
+                        try {
+                            ObjectMapper objectMapper = new ObjectMapper();
+                            RespostaDto res = objectMapper.readValue(result, RespostaDto.class);
+                            hideLoadView();
+
+                            DecimalFormat df = new DecimalFormat("#,##0.00 '%'");
+                            Double normalPerc = Double.parseDouble(res.getNormal());
+                            normalPerc = normalPerc*100;
+                            Double atePerc = Double.parseDouble(res.getAtelectasis());
+                            atePerc = atePerc*100;
+                            Double pneuPerc = Double.parseDouble(res.getPneumonia());
+                            pneuPerc = pneuPerc*100;
+
+                            textView.setText("Normal: "+df.format(normalPerc)+"\nAtelectasia: "+df.format(atePerc)+"\nPneumonia: "+df.format(pneuPerc));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            hideLoadView();
+                            result = "Erro ao processar solicitação";
+                            textView.setText(result);
+                        }
+
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // error
-                        Log.d("Error.Response", error.toString());
+                        Log.d("Response", error.toString());
+                        hideLoadView();
+                        result = "Erro ao processar solicitação";
+                        textView.setText(result);
                     }
                 }
         ) {
@@ -175,8 +209,11 @@ public class MainActivity extends AppCompatActivity implements  BottomNavigation
                 return params;
             }
         };
+        postRequest.setRetryPolicy(new DefaultRetryPolicy(
+                10000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
         queue.add(postRequest);
-        return result;
     }
 
     private String getStringFromBitmap(Bitmap bitmapPicture) {
@@ -248,4 +285,5 @@ public class MainActivity extends AppCompatActivity implements  BottomNavigation
         }
         return false;
     }
+
 }
